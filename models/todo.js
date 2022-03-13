@@ -18,6 +18,11 @@ const todoSchema = Schema({
   description: {
     type: String,
   },
+
+  pending: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 module.exports = model("Todo", todoSchema);
