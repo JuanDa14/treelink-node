@@ -1,14 +1,15 @@
 const { response } = require("express");
 const bcrypt = require("bcrypt");
 
-//Helpers
+//TODO: Helpers
 const { generateJWT } = require("../helpers/generate-jwt");
+/********************/
 
-//Modelos
+//TODO: Modelos
 const User = require("../models/user");
-const { verifyToken } = require("../helpers/verify-token");
+/*******************/
 
-//Controladores
+//TODO: Controladores
 const login = async (req, res = response) => {
   const { email, password } = req.body;
 
@@ -64,14 +65,13 @@ const register = async (req, res = response) => {
 };
 
 const verifyJWT = (req, res) => {
-  const token = req.header("x-token");
+  const uid = req.uid;
+  const name = req.name;
 
   try {
-    const verify = verifyToken(token);
-    
-    res.status(200).json({ ok: true, ...verify });
+    res.status(200).json({ ok: true, uid, username: name });
   } catch (error) {
-    res.status(500).json({ ok: false, msg: "Hubo un error al verficar token" });
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
   }
 };
 

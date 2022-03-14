@@ -3,8 +3,16 @@ const { check } = require("express-validator");
 const router = Router();
 
 const { login, register, verifyJWT } = require("../controllers/user");
-const { validationsReq, existsEmail } = require("../helpers/dbvalidations");
 
+//TODO: Validaciones en la db
+const { validationsReq, existsEmail } = require("../helpers/dbvalidations");
+//********************/
+
+//TODO: Middlewares
+const { verifyToken } = require("../middlewares/verify-token");
+/*********************/
+
+//TODO: Rutas
 router.post(
   "/register",
   [
@@ -27,10 +35,6 @@ router.post(
   login
 );
 
-router.post(
-  "/token",
-  [check("token", "El token es necesario"), validationsReq],
-  verifyJWT
-);
+router.post("/token", verifyToken, verifyJWT);
 
 module.exports = router;

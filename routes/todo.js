@@ -8,19 +8,26 @@ const {
   updatedTodo,
   removeTodo,
 } = require("../controllers/todo");
-const { validationsReq, existsTodo } = require("../helpers/dbvalidations");
 
-router.get(
-  "/",
-  [check("x-token", "Token is required").notEmpty(), validationsReq],
-  getTodos
-);
+const { validationsReq, existsTodo } = require("../helpers/dbvalidations");
+const { verifyToken } = require("../middlewares/verify-token");
+
+//TODO: validando el token
+router.use(verifyToken);
+//************************/
+
+
+//TODO: RUTAS
+/***********************/
+
+router.get("/", getTodos);
 
 router.post(
   "/",
   [
     check("title", "Title is required").notEmpty(),
     check("date", "Date is required").notEmpty().isDate(),
+    check("userId", "userId is required").notEmpty(),
     validationsReq,
   ],
   createTodo

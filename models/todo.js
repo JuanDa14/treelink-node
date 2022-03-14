@@ -1,28 +1,36 @@
 const { Schema, model } = require("mongoose");
 
-const todoSchema = Schema({
-  title: {
-    type: String,
-    required: true,
-  },
+const todoSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
 
-  userId: {
-    type: Schema.Types.ObjectId,
-  },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
 
-  date: {
-    type: Date,
-    required: true,
-  },
+    date: {
+      type: Date,
+      required: true,
+    },
 
-  description: {
-    type: String,
-  },
+    description: {
+      type: String,
+    },
 
-  pending: {
-    type: Boolean,
-    default: true,
+    pending: {
+      type: Boolean,
+      default: true,
+    },
   },
-});
+  {
+    timestamps: true,
+    versionKey: false,
+  }
+);
 
 module.exports = model("Todo", todoSchema);
