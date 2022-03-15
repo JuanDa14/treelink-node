@@ -64,15 +64,15 @@ const register = async (req, res = response) => {
   }
 };
 
-const verifyJWT = (req, res) => {
+const getUserRefresh = (req, res) => {
   const uid = req.uid;
-  const name = req.name;
+  const username = req.username;
 
   try {
-    res.status(200).json({ ok: true, uid, username: name });
+    res.status(200).json({ ok: true, uid, username });
   } catch (error) {
     res.status(500).json({ ok: false, msg: "Hable con el administrador" });
   }
 };
 
-module.exports = { login, register, verifyJWT };
+module.exports = { login, register, getUserRefresh };

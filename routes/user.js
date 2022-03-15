@@ -2,7 +2,7 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const router = Router();
 
-const { login, register, verifyJWT } = require("../controllers/user");
+const { login, register, getUserRefresh } = require("../controllers/user");
 
 //TODO: Validaciones en la db
 const { validationsReq, existsEmail } = require("../helpers/dbvalidations");
@@ -35,6 +35,6 @@ router.post(
   login
 );
 
-router.post("/token", verifyToken, verifyJWT);
+router.post("/token", verifyToken, getUserRefresh);
 
 module.exports = router;

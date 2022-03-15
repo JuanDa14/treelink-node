@@ -8,16 +8,16 @@ const verifyToken = (req, res, next) => {
       return res.status(400).json({ ok: false, msg: "Falta el token" });
     }
 
-    const { uid, name } = jwt.verify(token, process.env.SECRET_TOKEN);
+    const { uid, username } = jwt.verify(token, process.env.SECRET_TOKEN);
 
     req.uid = uid;
-    req.name = name;
+    req.username = username;
+
+    next();
   } catch (error) {
     console.log(error);
     res.status(500).json({ ok: false, msg: "Token no valido" });
   }
-
-  next();
 };
 
 module.exports = { verifyToken };
