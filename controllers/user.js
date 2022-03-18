@@ -100,7 +100,7 @@ const loginGoogle = async (req, res) => {
 
     //TODO: el usuario existe
     //TODO: Generar token
-    const token = await generateJWT(user.uid, user.username);
+    const token = await generateJWT(user._id, user.username);
 
     res
       .status(200)
