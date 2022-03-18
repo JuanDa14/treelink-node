@@ -2,7 +2,12 @@ const { Router } = require("express");
 const { check } = require("express-validator");
 const router = Router();
 
-const { login, register, getUserRefresh } = require("../controllers/user");
+const {
+  login,
+  register,
+  getUserRefresh,
+  loginGoogle,
+} = require("../controllers/user");
 
 //TODO: Validaciones en la db
 const { validationsReq, existsEmail } = require("../helpers/dbvalidations");
@@ -35,6 +40,12 @@ router.post(
   login
 );
 
-router.post("/token", verifyToken, getUserRefresh);
+router.get("/token", verifyToken, getUserRefresh);
+
+router.post(
+  "/google",
+  [check("tokenId", "tokenId is required").notEmpty(), validationsReq],
+  loginGoogle
+);
 
 module.exports = router;

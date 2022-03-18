@@ -7,6 +7,7 @@ const { generateJWT } = require("../helpers/generate-jwt");
 
 //TODO: Modelos
 const User = require("../models/user");
+const { googleVerify } = require("../helpers/verify-token-google");
 /*******************/
 
 //TODO: Controladores
@@ -49,7 +50,7 @@ const register = async (req, res = response) => {
     user.password = bcrypt.hashSync(password, salt);
 
     //Guardando el nuevo usuario
-    user.save();
+    await user.save();
 
     //Creando el token
     const token = await generateJWT(user._id, user.username);
@@ -75,4 +76,38 @@ const getUserRefresh = (req, res) => {
   }
 };
 
-module.exports = { login, register, getUserRefresh };
+const loginGoogle = async (req, res) => {
+  const { tokenId } = req.body;
+
+  try {
+    const { name, email } = await googleVerify(tokenId);
+
+    let user = await User.findOne({ email });
+
+    // TODO: el no usuario existe
+    if (!user) {
+      const data = {
+        username: name,
+        email,
+        password: "google",
+        google: true,
+      };
+
+      user = new User(data);
+
+      await user.save();
+    }
+
+    //TODO: el usuario existe
+    //TODO: Generar token
+    const token = await generateJWT(user.uid, user.username);
+
+    res
+      .status(200)
+      .json({ ok: true, token, name: user.username, uid: user._id });
+  } catch (error) {
+    res.status(400).json({ ok: false, msg: "Token invalido" });
+  }
+};
+
+module.exports = { login, register, getUserRefresh, loginGoogle };

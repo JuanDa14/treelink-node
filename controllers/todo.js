@@ -46,7 +46,7 @@ const createTodo = async (req, res = response) => {
   try {
     const todo = new Todo({ title, description, userId: uid, date });
 
-    todo.save();
+    await todo.save();
 
     res.status(200).json({ ok: true, todo });
   } catch (error) {
