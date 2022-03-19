@@ -26,6 +26,11 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
+    resetLink: {
+      type: String,
+      default: "",
+    },
   },
   {
     versionKey: false,

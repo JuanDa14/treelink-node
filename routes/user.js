@@ -7,6 +7,7 @@ const {
   register,
   getUserRefresh,
   loginGoogle,
+  forgotPassword,
 } = require("../controllers/user");
 
 //TODO: Validaciones en la db
@@ -35,6 +36,7 @@ router.post(
   [
     check("email", "Email is required").notEmpty().isEmail(),
     check("password", "Password is required").notEmpty().isLength({ min: 6 }),
+    check("email").custom(existsEmail),
     validationsReq,
   ],
   login
@@ -46,6 +48,12 @@ router.post(
   "/google",
   [check("tokenId", "tokenId is required").notEmpty(), validationsReq],
   loginGoogle
+);
+
+router.post(
+  "/forgotpassword",
+  [check("email", "Email is required").notEmpty().isEmail(), validationsReq],
+  forgotPassword
 );
 
 module.exports = router;
