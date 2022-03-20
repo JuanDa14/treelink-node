@@ -1,5 +1,6 @@
 const { response } = require("express");
 const bcrypt = require("bcrypt");
+const { templateEmail } = require("../templates/email");
 
 //TODO: Helpers
 const { generateJWT } = require("../helpers/generate-jwt");
@@ -8,7 +9,7 @@ const { googleVerify } = require("../helpers/verify-token-google");
 
 //TODO: Modelos
 const User = require("../models/user");
-const { transporterEmailer } = require("../helpers/emailer");
+const { transporter } = require("../helpers/nodemailer");
 /*******************/
 
 //TODO: Controladores
@@ -22,15 +23,15 @@ const login = async (req, res = response) => {
     const verifyPassword = bcrypt.compareSync(password, user.password);
 
     if (!verifyPassword) {
-      return res.status(400).json({ ok: false, msg: "Contraseña incorrecta" });
+      return res.status(400).json({ ok: false, msg: "Incorrect password" });
     }
 
     //Generar JWT
-    const token = await generateJWT(user._id, user.username);
+    const token = await generateJWT(user._id, user.username, true);
 
     res.json({ ok: true, token, name: user.username, uid: user._id });
   } catch (error) {
-    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
   }
 };
 
@@ -47,15 +48,13 @@ const register = async (req, res = response) => {
     await user.save();
 
     //Creando el token
-    const token = await generateJWT(user._id, user.username);
+    const token = await generateJWT(user._id, user.username, true);
 
     res
       .status(200)
       .json({ ok: true, token, name: user.username, uid: user._id });
   } catch (error) {
-    res
-      .status(500)
-      .json({ ok: false, msg: "Hable con el administrador", error });
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
   }
 };
 
@@ -66,10 +65,11 @@ const getUserRefresh = (req, res) => {
   try {
     res.status(200).json({ ok: true, uid, username });
   } catch (error) {
-    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
   }
 };
 
+//TODO: Login con google
 const loginGoogle = async (req, res) => {
   const { tokenId } = req.body;
 
@@ -78,7 +78,7 @@ const loginGoogle = async (req, res) => {
 
     let user = await User.findOne({ email });
 
-    // TODO: el no usuario existe
+    // El no usuario existe
     if (!user) {
       const data = {
         username: name,
@@ -92,48 +92,90 @@ const loginGoogle = async (req, res) => {
       await user.save();
     }
 
-    //TODO: el usuario existe
-    //TODO: Generar token
-    const token = await generateJWT(user._id, user.username);
+    //El usuario existe - Generar token
+    const token = await generateJWT(user._id, user.username, true);
 
     res
       .status(200)
       .json({ ok: true, token, name: user.username, uid: user._id });
   } catch (error) {
-    res.status(500).json({ ok: false, msg: "Token invalido" });
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
   }
 };
 
+//TODO: Restablecer contraseña
 const forgotPassword = async (req, res = response) => {
   const { email } = req.body;
 
   try {
-    const user = await User.find({ email });
-    console.log(user.resetLink);
-    user.resetLink = `${process.env.FORGOT_PASSWORD_URL}/resetpassword/${token}`;
+    const user = await User.findOne({ email });
 
-    console.log(user.resetLink);
+    if (!user) {
+      return res
+        .status(500)
+        .json({ ok: false, msg: "The email is not registered" });
+    }
+
+    //Verificando si es login con google
+    if (user.google) {
+      return res.status(403).json({ ok: false, msg: "Password change error" });
+    }
+
+    //Generando el token de recuperacion de contraseña
+
+    const token = await generateJWT(user._id, user.username, false);
+
+    //Actualizando el usuario
+    const link = `${process.env.FORGOT_PASSWORD_URL}/auth/resetpassword?q=${token}`;
+    user.resetLink = link;
 
     await user.save();
 
-    //TODO: generando el token de recuperacion de contraseña
-    const token = await generateJWT(user._id, user.username);
+    //Enviar email con link
+    const transport = transporter();
 
-    //TODO: Enviar email con link
-    const transporter = transporterEmailer();
+    const html = templateEmail(user.username, link); //template
 
-    await transporter.sendMail({
-      from: '"Fred Foo 👻" <foo@example.com>',
+    await transport.sendMail({
+      from: process.env.EMAIL_ADDRESS,
       to: `${email}`,
-      subject: "Hello ✔",
-      html: `<a href = ${process.env.FORGOT_PASSWORD_URL}/forgotpassword/${token}>
-      ${process.env.FORGOT_PASSWORD_URL}/resetpassword/${token}
-      </a>`,
+      subject: "Forgot Password",
+      html,
     });
 
-    res.status(200).send({ ok: true, msg: "Revisa tu correo electronico" });
+    res.status(200).send({ ok: true, msg: "Check your email!!!" });
   } catch (error) {
-    res.status(400).json({ ok: false, msg: "Token invalido" });
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { password, resetLink } = req.body;
+
+  const uid = req.uid;
+
+  try {
+    const user = await User.findOne({ _id: uid });
+
+    //Verificando los links
+    if (user.resetLink !== process.env.FORGOT_PASSWORD_URL + resetLink) {
+      return res.status(401).json({
+        ok: true,
+        msg: "An error has occurred when wanting to change the Password",
+      });
+    }
+
+    //Encriptando la nueva contraseña
+    const salt = bcrypt.genSaltSync();
+    user.password = bcrypt.hashSync(password, salt);
+
+    //Guardando el usuario
+    user.resetLink = "";
+    await user.save();
+
+    res.status(200).json({ ok: true, msg: "Updated password" });
+  } catch (error) {
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
   }
 };
 
@@ -143,4 +185,5 @@ module.exports = {
   getUserRefresh,
   loginGoogle,
   forgotPassword,
+  resetPassword,
 };
