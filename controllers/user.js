@@ -157,10 +157,18 @@ const resetPassword = async (req, res) => {
   try {
     const user = await User.findOne({ _id: uid });
 
+    //Verificando que no actualize dos 2veces la contraseña con el mismo token
+    if (user.resetLink === "") {
+      return res.status(401).json({
+        ok: false,
+        msg: "I already updated your password",
+      });
+    }
+
     //Verificando los links
     if (user.resetLink !== process.env.FORGOT_PASSWORD_URL + resetLink) {
       return res.status(401).json({
-        ok: true,
+        ok: false,
         msg: "An error has occurred when wanting to change the Password",
       });
     }
