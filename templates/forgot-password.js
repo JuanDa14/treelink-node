@@ -1,4 +1,4 @@
-const templateEmail = (name, link) => {
+const templateForgotPassword = (name, link) => {
   return `<!DOCTYPE html>
 <html>
   <head>
@@ -165,4 +165,4 @@ const templateEmail = (name, link) => {
 `;
 };
 
-module.exports = { templateEmail };
+module.exports = { templateForgotPassword };

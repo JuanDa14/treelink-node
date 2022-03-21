@@ -9,14 +9,16 @@ const {
   loginGoogle,
   forgotPassword,
   resetPassword,
+  verifyEmail,
 } = require("../controllers/user");
 
 //TODO: Validaciones en la db
-const { validationsReq, existsEmail } = require("../helpers/dbvalidations");
+const { existsEmail } = require("../helpers/dbvalidations");
 //********************/
 
 //TODO: Middlewares
 const { verifyToken } = require("../middlewares/verify-token");
+const { validationsReq } = require("../middlewares/validate-fields");
 /*********************/
 
 //TODO: Rutas
@@ -32,6 +34,9 @@ router.post(
   register
 );
 
+//Verificar email
+router.post("/confirm-email", verifyToken, verifyEmail);
+
 router.post(
   "/login",
   [
@@ -45,7 +50,6 @@ router.post(
 router.get("/token", verifyToken, getUserRefresh);
 
 //TODO: Login con Google
-
 router.post(
   "/google",
   [check("tokenId", "tokenId is required").notEmpty(), validationsReq],
@@ -53,7 +57,6 @@ router.post(
 );
 
 //TODO: Restaurar contraseña
-
 router.post(
   "/forgotpassword",
   [check("email", "Email is required").notEmpty().isEmail(), validationsReq],

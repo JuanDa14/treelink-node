@@ -9,13 +9,16 @@ const {
   removeTodo,
 } = require("../controllers/todo");
 
-const { validationsReq, existsTodo } = require("../helpers/dbvalidations");
+const { existsTodo } = require("../helpers/dbvalidations");
+
+//TODO: Middlewares
 const { verifyToken } = require("../middlewares/verify-token");
+const { validationsReq } = require("../middlewares/validate-fields");
+//************************/
 
 //TODO: validando el token
 router.use(verifyToken);
 //************************/
-
 
 //TODO: RUTAS
 /***********************/

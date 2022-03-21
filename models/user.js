@@ -31,6 +31,16 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
+
+    verifyEmail: {
+      type: Boolean,
+      default: false,
+    },
+
+    linkVerifyEmail: {
+      type: String,
+      default: "",
+    },
   },
   {
     versionKey: false,
