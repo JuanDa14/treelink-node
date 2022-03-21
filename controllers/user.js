@@ -105,7 +105,6 @@ const verifyEmail = async (req, res) => {
     }
 
     user.verifyEmail = true;
-    user.linkVerifyEmail = "";
 
     await user.save();
 
