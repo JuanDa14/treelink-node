@@ -29,8 +29,7 @@ router.post(
   "/",
   [
     check("title", "Title is required").notEmpty(),
-    check("date", "Date is required").notEmpty().isDate(),
-    check("userId", "userId is required").notEmpty(),
+    check("date", "Date is required").notEmpty(),
     validationsReq,
   ],
   createTodo
