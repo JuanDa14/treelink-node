@@ -10,6 +10,7 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  loginFacebook,
 } = require("../controllers/user");
 
 //TODO: Validaciones en la db
@@ -54,6 +55,17 @@ router.post(
   "/google",
   [check("tokenId", "tokenId is required").notEmpty(), validationsReq],
   loginGoogle
+);
+
+//TODO: Login con facebook
+router.post(
+  "/facebook",
+  [
+    check("username", "UserName is required").notEmpty(),
+    check("id", "Id is required").notEmpty(),
+    validationsReq,
+  ],
+  loginFacebook
 );
 
 //TODO: Restaurar contraseña

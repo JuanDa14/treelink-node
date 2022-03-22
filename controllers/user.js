@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const { generateJWT } = require("../helpers/generate-jwt");
 const { googleVerify } = require("../helpers/verify-token-google");
 const { sendEmail } = require("../helpers/nodemailer");
+
 /********************/
 
 //TODO: Modelos
@@ -275,11 +276,50 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const loginFacebook = async (req, res) => {
+  const { username, id } = req.body;
+
+  try {
+    //Si el usuario no existe
+    let user = await User.findOne({ email: `${id}` });
+
+    if (!user) {
+      user = new User({
+        username,
+        password: process.env.PASSWORD_LOGIN_FACEBOOK,
+        email: `${id}`,
+        verifyEmail: true,
+      });
+
+      await user.save();
+
+      const token = await generateJWT(user._id, user.username, "4h");
+      return res
+        .status(200)
+        .json({ ok: true, token, username: user.username, uid: user._id });
+    }
+
+    if (!user.verifyEmail) {
+      return res.status(403).json({ ok: false, msg: "Unverified email" });
+    }
+
+    //El usuario existe
+    const token = await generateJWT(user._id, user.username, "4h");
+
+    return res
+      .status(200)
+      .json({ ok: true, token, username: user.username, uid: user._id });
+  } catch (error) {
+    res.status(500).json({ ok: false, msg: "Talk to the administrator" });
+  }
+};
+
 module.exports = {
   login,
   register,
   getUserRefresh,
   loginGoogle,
+  loginFacebook,
   forgotPassword,
   resetPassword,
   verifyEmail,
