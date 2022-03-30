@@ -39,6 +39,8 @@ router.put(
   "/:id",
   [
     check("id", "Id is required").notEmpty(),
+    check("title", "Title is required").notEmpty(),
+    check("date", "Date is required").notEmpty(),
     check("id").custom(existsTodo),
     validationsReq,
   ],
