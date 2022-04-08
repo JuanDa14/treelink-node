@@ -19,7 +19,7 @@ const sendEmail = async (template, username, link, email, subject) => {
   const html =
     template === "forgot-password"
       ? templateForgotPassword(username, link)
-      : templateValidateEmail(username, link); //template
+      : templateValidateEmail(username, link);
 
   await transport.sendMail({
     from: process.env.EMAIL_ADDRESS,

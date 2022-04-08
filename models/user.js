@@ -15,6 +15,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
+      minlength: 6,
     },
 
     state: {
@@ -27,17 +28,17 @@ const userSchema = new Schema(
       default: false,
     },
 
-    resetLink: {
+    forgotPassword: {
       type: String,
       default: "",
     },
 
-    verifyEmail: {
+    verified: {
       type: Boolean,
       default: false,
     },
 
-    linkVerifyEmail: {
+    linkVerified: {
       type: String,
       default: "",
     },

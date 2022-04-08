@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const fileUpload = require("express-fileupload");
+
 const { dbConnection } = require("../database/config");
 
 class Server {
@@ -21,15 +23,23 @@ class Server {
   }
 
   middleware() {
-    //Cors
+    //TODO Cors
     this.app.use(cors());
-    //Parseo
+    //TODO Parseo
     this.app.use(express.json());
+    //TODO File Upload
+    this.app.use(
+      fileUpload({
+        useTempFiles: true,
+        tempFileDir: "/tmp/",
+        createParentPath: true,
+      })
+    );
   }
 
   routes() {
-    this.app.use("/api/v1/todo", require("../routes/todo"));
-    this.app.use("/api/v1", require("../routes/user"));
+    this.app.use("/api/link", require("../routes/link"));
+    this.app.use("/api/user", require("../routes/user"));
   }
 
   listen() {

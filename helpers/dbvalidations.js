@@ -1,20 +1,23 @@
+const Link = require("../models/link");
 const User = require("../models/user");
-const Todo = require("../models/todo");
 
-const existsEmail = async (email = "") => {
-  const exists = await User.findOne({ email });
+const notExistsLink = async (id) => {
+  const link = await Link.findById(id);
 
-  if (exists) {
-    throw new Error("Email already registered");
+  if (!link) {
+    throw new Error("Link not found");
   }
 };
 
-const existsTodo = async (id) => {
-  const existTodo = await Todo.findById(id);
+const existsEmail = async (email) => {
+  const user = await User.findOne({ email });
 
-  if (!existTodo) {
-    throw new Error("The todo does not exist");
+  if (user) {
+    throw new Error("Email already exists");
   }
 };
 
-module.exports = { existsEmail, existsTodo };
+module.exports = {
+  notExistsLink,
+  existsEmail,
+};
