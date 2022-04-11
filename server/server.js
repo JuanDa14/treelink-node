@@ -38,8 +38,8 @@ class Server {
   }
 
   routes() {
-    this.app.use("/api/link", require("../routes/link"));
-    this.app.use("/api/user", require("../routes/user"));
+    this.app.use("/api/link", require("../routes/link.routes"));
+    this.app.use("/api/user", require("../routes/user.routes"));
   }
 
   listen() {

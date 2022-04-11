@@ -1,9 +1,10 @@
 const Link = require("../models/link");
 
-const { savedImg } = require("../helpers/cloudinary");
+const { savedImg } = require("../helpers");
 
-const getLinks = async (req, res) => {
-  const { id } = req.user;
+const getUserLinks = async (req, res) => {
+  const { id } = req;
+
   try {
     const links = await Link.find({ user: id });
 
@@ -12,93 +13,99 @@ const getLinks = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: "Internal server error",
-      error,
     });
   }
 };
 
-const postLink = async (req, res) => {
-  const { title, url, img } = req.body;
-  const { id, username } = req.user;
-  try {
-    // const secure_url = await savedImg(req.files, "", username);
+const createUserLink = async (req, res) => {
+  const { title, url } = req.body;
 
-    const newlink = await new Link({
+  const { id, username } = req;
+
+  try {
+    const secure_url = await savedImg(req.files, "", username);
+
+    if (!secure_url) {
+      return res
+        .status(401)
+        .json({ ok: false, message: "Error uploading image" });
+    }
+
+    const link = await new Link({
       title,
       url,
-      img,
+      img: secure_url,
       user: id,
     });
 
-    await newlink.save();
-
-    const { createdAt, updatedAt, ...link } = newlink._doc;
+    await link.save();
 
     return res.status(201).json({ ok: true, link });
   } catch (error) {
     return res.status(500).json({
       ok: false,
       message: "Internal server error",
-      error,
     });
   }
 };
 
-const updateLink = async (req, res) => {
+const updateUserLink = async (req, res) => {
   const { id } = req.params;
-  const { title, url, img } = req.body;
-  const { username } = req.user;
+
+  const { username } = req;
+
+  const { title, url } = req.body;
+
   try {
-    // const link = await Link.findById(id).populate("user", "username");
+    const link = await Link.findById(id);
 
-    const link = await Link.findByIdAndUpdate(
-      id,
-      { title, url, img },
-      { new: true }
-    );
-    // let secure_url;
+    let secure_url;
 
-    // if (!req.files) {
-    //   secure_url = link.img;
-    // } else {
-    //   secure_url = await savedImg(req.files, link.img, username);
-    // }
+    if (req.files) {
+      secure_url = await savedImg(req.files, link.img, username);
+      link.img = secure_url;
 
-    // if (!secure_url) {
-    //   return res
-    //     .status(401)
-    //     .json({ ok: false, message: "Error uploading image" });
-    // }
+      if (!secure_url) {
+        return res
+          .status(401)
+          .json({ ok: false, message: "Error uploading image" });
+      }
+    }
 
-    // link.title = title;
-    // link.url = url;
-    // link.img = secure_url;
+    if (title || url) {
+      link.title = title;
+      link.url = url;
+    }
 
-    // await link.save();
+    await link.save();
 
     return res.status(200).json({ ok: true, link });
   } catch (error) {
     return res.status(500).json({
       ok: false,
       message: "Internal server error",
-      error,
     });
   }
 };
 
-const deleteLink = async (req, res) => {
+const deleteUserLink = async (req, res) => {
   const { id } = req.params;
+
   try {
     await Link.findByIdAndDelete(id);
 
-    return res.status(200).json({ ok: true, message: "Link deleted" });
+    return res.status(200).json({ ok: true, message: "Deleted user link" });
   } catch (error) {
     return res.status(500).json({
       ok: false,
       message: "Internal server error",
-      error,
     });
   }
 };
 
-module.exports = { postLink, getLinks, updateLink, deleteLink };
+module.exports = {
+  getUserLinks,
+  createUserLink,
+  updateUserLink,
+  deleteUserLink,
+};

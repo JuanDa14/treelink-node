@@ -1,29 +1,28 @@
 const jwt = require("jsonwebtoken");
 
-const verifyToken = (secretToken) => {
-  return (req, res, next) => {
-    try {
-      const token = req.header("Authorization").split(" ")[1];
-      
-      if (!token) {
-        return res.status(400).json({ ok: false, message: "Token not sent" });
-      }
+const { types } = require("../types/types");
 
-      const user = jwt.verify(token, secretToken);
+const verifyToken = (req, res, next) => {
+  const token = req.header("Authorization").split(" ")[1];
 
-      if (!user) {
-        return res.status(401).json({ ok: false, message: "Token invalid" });
-      }
+  if (!token)
+    return res.status(400).json({ ok: false, message: "Token not sent" });
 
-      req.user = user;
+  try {
+    const { username, id } = jwt.verify(token, types.secretToken);
 
-      next();
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ ok: false, message: "There was a problem with your access" });
-    }
-  };
+    if (!(username && id))
+      return res.status(401).json({ ok: false, message: "Token invalid" });
+
+    req.username = username;
+    req.id = id;
+
+    next();
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ ok: false, message: "There was a problem with your access" });
+  }
 };
 
 module.exports = { verifyToken };

@@ -2,27 +2,21 @@
 const cloudinary = require("cloudinary").v2;
 cloudinary.config(process.env.CLOUDINARY_URL);
 
-const allowedExtensions = ["jpg", "jpeg", "png", "gif"];
-
 const savedImg = async (req, img, collection) => {
   try {
-    const { tempFilePath, mimetype } = req.file;
-
-    const extension = mimetype.split("/")[1];
-
-    if (!allowedExtensions.includes(extension)) {
-      return false;
-    }
+    const { tempFilePath } = req.file;
 
     if (img !== "") {
       const nameArray = img.split("/");
       const name = nameArray[nameArray.length - 1];
       const [public_id] = name.split(".");
-      await cloudinary.uploader.destroy(collection + "/" + public_id);
+      await cloudinary.uploader.destroy(
+        "tree-link/" + collection + "/" + public_id
+      );
     }
 
     const { secure_url } = await cloudinary.uploader.upload(tempFilePath, {
-      folder: collection,
+      folder: "tree-link/" + collection,
     });
 
     if (secure_url) {

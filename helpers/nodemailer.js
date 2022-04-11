@@ -1,13 +1,15 @@
 const nodemailer = require("nodemailer");
 const nodemailerSendgrid = require("nodemailer-sendgrid");
 
+const { types } = require("../types/types");
+
 const { templateForgotPassword } = require("../templates/forgot-password");
 const { templateValidateEmail } = require("../templates/validate-email");
 
 const transporter = () => {
   const transport = nodemailer.createTransport(
     nodemailerSendgrid({
-      apiKey: process.env.SENDGRID_API_KEY,
+      apiKey: types.sengridApiKey,
     })
   );
   return transport;
@@ -22,7 +24,7 @@ const sendEmail = async (template, username, link, email, subject) => {
       : templateValidateEmail(username, link);
 
   await transport.sendMail({
-    from: process.env.EMAIL_ADDRESS,
+    from: types.defaultEmail,
     to: `${email}`,
     subject,
     html,

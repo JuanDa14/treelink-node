@@ -3,7 +3,6 @@ const User = require("../models/user");
 
 const notExistsLink = async (id) => {
   const link = await Link.findById(id);
-
   if (!link) {
     throw new Error("Link not found");
   }
@@ -11,9 +10,8 @@ const notExistsLink = async (id) => {
 
 const existsEmail = async (email) => {
   const user = await User.findOne({ email });
-
   if (user) {
-    throw new Error("Email already exists");
+    throw new Error("An error has occurred");
   }
 };
 
