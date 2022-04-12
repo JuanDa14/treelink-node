@@ -4,8 +4,6 @@ const fileUpload = require("express-fileupload");
 
 const { dbConnection } = require("../database/config");
 
-const whiteList = ["http://localhost:3000", "https://treelink.netlify.app"];
-
 class Server {
   constructor() {
     this.app = express();
@@ -26,7 +24,7 @@ class Server {
 
   middleware() {
     //TODO Cors
-    this.app.use(cors({ origin: whiteList }));
+    this.app.use(cors());
     //TODO Parseo
     this.app.use(express.json());
     //TODO File Upload
