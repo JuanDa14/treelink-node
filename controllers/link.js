@@ -23,7 +23,7 @@ const createUserLink = async (req, res) => {
   const { id, username } = req;
 
   try {
-    const secure_url = await savedImg(req.files, "", username);
+    const secure_url = await savedImg(req.files, null, username, "POST");
 
     if (!secure_url) {
       return res
@@ -62,7 +62,7 @@ const updateUserLink = async (req, res) => {
     let secure_url;
 
     if (req.files) {
-      secure_url = await savedImg(req.files, link.img, username);
+      secure_url = await savedImg(req.files, link.img, username, "PUT");
       link.img = secure_url;
 
       if (!secure_url) {
@@ -91,7 +91,19 @@ const updateUserLink = async (req, res) => {
 const deleteUserLink = async (req, res) => {
   const { id } = req.params;
 
+  const { username } = req;
+
   try {
+    const link = await Link.findById(id);
+    
+    const img_deleted = await savedImg(null, link.img, username, "DELETE");
+
+    if (!img_deleted) {
+      return res
+        .status(401)
+        .json({ ok: false, message: "Error deleting image" });
+    }
+
     await Link.findByIdAndDelete(id);
 
     return res.status(200).json({ ok: true, message: "Deleted user link" });

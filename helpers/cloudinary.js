@@ -2,11 +2,17 @@
 const cloudinary = require("cloudinary").v2;
 cloudinary.config(process.env.CLOUDINARY_URL);
 
-const savedImg = async (req, img, collection) => {
-  try {
-    const { tempFilePath } = req.file;
+const savedImg = async (req, img, collection, method) => {
+  let tempFilePath;
 
-    if (img !== "") {
+  if (req) {
+    const { tempFilePath: temp_file } = req.file;
+
+    tempFilePath = temp_file;
+  }
+
+  try {
+    if (method === "PUT" || method === "DELETE") {
       const nameArray = img.split("/");
       const name = nameArray[nameArray.length - 1];
       const [public_id] = name.split(".");
@@ -14,6 +20,8 @@ const savedImg = async (req, img, collection) => {
         "tree-link/" + collection + "/" + public_id
       );
     }
+
+    if (method === "DELETE") return true;
 
     const { secure_url } = await cloudinary.uploader.upload(tempFilePath, {
       folder: "tree-link/" + collection,
