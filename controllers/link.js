@@ -94,8 +94,8 @@ const deleteUserLink = async (req, res) => {
   const { username } = req;
 
   try {
-    const link = await Link.findById(id);
-    
+    const link = await Link.findByIdAndDelete(id);
+
     const img_deleted = await savedImg(null, link.img, username, "DELETE");
 
     if (!img_deleted) {
@@ -103,8 +103,6 @@ const deleteUserLink = async (req, res) => {
         .status(401)
         .json({ ok: false, message: "Error deleting image" });
     }
-
-    await Link.findByIdAndDelete(id);
 
     return res.status(200).json({ ok: true, message: "Deleted user link" });
   } catch (error) {
