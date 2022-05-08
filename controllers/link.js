@@ -18,23 +18,23 @@ const getUserLinks = async (req, res) => {
 };
 
 const createUserLink = async (req, res) => {
-  const { title, url } = req.body;
-
   const { id, username } = req;
 
-  try {
-    const secure_url = await savedImg(req.files, null, username, "POST");
+  const { title, url } = req.body;
 
-    if (!secure_url) {
+  try {
+    const img = await savedImg(req.files, null, username, "POST");
+
+    if (!img) {
       return res
-        .status(401)
+        .status(409)
         .json({ ok: false, message: "Error uploading image" });
     }
 
-    const link = await new Link({
+    const link = new Link({
       title,
       url,
-      img: secure_url,
+      img,
       user: id,
     });
 
@@ -42,6 +42,7 @@ const createUserLink = async (req, res) => {
 
     return res.status(201).json({ ok: true, link });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       ok: false,
       message: "Internal server error",
@@ -63,19 +64,19 @@ const updateUserLink = async (req, res) => {
 
     if (req.files) {
       secure_url = await savedImg(req.files, link.img, username, "PUT");
-      link.img = secure_url;
 
       if (!secure_url) {
         return res
           .status(401)
           .json({ ok: false, message: "Error uploading image" });
       }
+
+      link.img = secure_url;
     }
 
-    if (title || url) {
-      link.title = title;
-      link.url = url;
-    }
+    title && (link.title = title);
+
+    url && (link.url = url);
 
     await link.save();
 
@@ -104,7 +105,9 @@ const deleteUserLink = async (req, res) => {
         .json({ ok: false, message: "Error deleting image" });
     }
 
-    return res.status(200).json({ ok: true, message: "Deleted user link" });
+    return res
+      .status(200)
+      .json({ ok: true, message: "Link deleted successfully" });
   } catch (error) {
     return res.status(500).json({
       ok: false,

@@ -1,5 +1,7 @@
 const { Schema, model } = require("mongoose");
 
+const bcrypt = require("bcrypt");
+
 const userSchema = new Schema(
   {
     username: {
@@ -10,6 +12,13 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
+    },
+
+    picture: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/dbvyaguam/image/upload/v1650761674/user_not_found_opkceh.webp",
     },
 
     password: {
@@ -30,7 +39,8 @@ const userSchema = new Schema(
 
     forgotPassword: {
       type: String,
-      default: "",
+      required: true,
+      unique: true,
     },
 
     verified: {
@@ -38,9 +48,10 @@ const userSchema = new Schema(
       default: false,
     },
 
-    linkVerified: {
+    tokenConfirm: {
       type: String,
-      default: "",
+      required: true,
+      unique: true,
     },
   },
   {
@@ -48,5 +59,21 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+userSchema.pre("save", function (next) {
+  const user = this;
+
+  if (!user.isModified("password")) return next();
+
+  const salt = bcrypt.genSaltSync();
+
+  user.password = bcrypt.hashSync(user.password, salt);
+
+  next();
+});
+
+userSchema.methods.comparePassword = function (password) {
+  return bcrypt.compareSync(password, this.password);
+};
 
 module.exports = model("User", userSchema);

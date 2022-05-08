@@ -11,7 +11,7 @@ const {
 } = require("../controllers/link");
 
 //TODO: Helpers
-const { notExistsLink } = require("../helpers");
+const { notExistLink } = require("../helpers");
 /***********************/
 
 //TODO: Middlewares
@@ -30,8 +30,8 @@ router.get("/", getUserLinks);
 router.post(
   "/",
   [
-    check("title", "Title is required").notEmpty(),
-    check("url", "Url is required").notEmpty(),
+    check("title", "The title is required").trim().notEmpty(),
+    check("url", "The url is required").trim().notEmpty(),
     validateFile,
     validationsReq,
   ],
@@ -41,8 +41,8 @@ router.post(
 router.put(
   "/:id",
   [
-    check("id", "Id is required").isMongoId(),
-    check("id").custom(notExistsLink),
+    check("id", "An error has occurred").isMongoId(),
+    check("id").custom(notExistLink),
     validationsReq,
   ],
   updateUserLink
@@ -51,8 +51,8 @@ router.put(
 router.delete(
   "/:id",
   [
-    check("id", "Id is required").isMongoId(),
-    check("id").custom(notExistsLink),
+    check("id", "An error has occurred").isMongoId(),
+    check("id").custom(notExistLink),
     validationsReq,
   ],
   deleteUserLink

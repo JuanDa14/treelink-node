@@ -14,7 +14,7 @@ const {
 } = require("../controllers/user");
 
 //TODO: Helpers
-const { existsEmail } = require("../helpers");
+const { isExistEmail } = require("../helpers");
 /*********************/
 
 //TODO: Middlewares
@@ -29,30 +29,37 @@ const {
 router.post(
   "/register",
   [
-    check("username", "Username is required").notEmpty(),
-    check("email", "Email is required").isEmail(),
-    check("password", "Password is required").notEmpty().isLength({ min: 6 }),
-    check("email").custom(existsEmail),
+    check("username", "The username is required").trim().notEmpty(),
+    check("email", "The email is required").trim().isEmail().normalizeEmail(),
+    check("password", "The password is required")
+      .trim()
+      .notEmpty()
+      .isLength({ min: 6 }),
+    check("email").custom(isExistEmail),
     validationsReq,
   ],
   registerUser
 );
 
-router.post(
-  "/confirm-email",
+//Todo confirmar email
+router.get(
+  "/confirm-email/:tokenConfirm",
   [
-    verifyToken,
-    check("linkVerified", "LinkVerified is required").notEmpty(),
+    check("tokenConfirm", "Error with email confirmation").trim().notEmpty(),
     validationsReq,
   ],
   verifyUserEmail
 );
 
+//TODO: Login
 router.post(
   "/login",
   [
-    check("email", "Email is required").isEmail(),
-    check("password", "Password is required").notEmpty().isLength({ min: 6 }),
+    check("email", "The email is required").trim().isEmail().normalizeEmail(),
+    check("password", "The password is required")
+      .trim()
+      .notEmpty()
+      .isLength({ min: 6 }),
     validationsReq,
   ],
   loginUser
@@ -69,26 +76,32 @@ router.post("/login-google", verifyTokenGoogle, loginUserGoogle);
 router.post(
   "/login-facebook",
   [
-    check("username", "UserName is required").notEmpty(),
-    check("id", "Id is required").notEmpty(),
+    check("username", "The username is required").trim().notEmpty(),
+    check("email", "The email is required").trim().isEmail().normalizeEmail(),
     validationsReq,
   ],
+
   loginUserFacebook
 );
 
 //TODO: Restaurar contraseña
 router.post(
   "/forgot-password",
-  [check("email", "Email is required").isEmail(), validationsReq],
+  [
+    check("email", "The email is required").trim().isEmail().normalizeEmail(),
+    validationsReq,
+  ],
   forgotUserPassword
 );
 
 router.put(
   "/reset-password",
   [
-    verifyToken,
-    check("forgotPassword", "Forgot password link is required").notEmpty(),
-    check("password", "Password is required").notEmpty().isLength({ min: 6 }),
+    check("forgotPassword", "Error with password recovery").trim().notEmpty(),
+    check("password", "The password is required")
+      .trim()
+      .notEmpty()
+      .isLength({ min: 6 }),
     validationsReq,
   ],
   resetUserPassword

@@ -16,7 +16,7 @@ const verifyToken = (req, res, next) => {
 
     req.username = username;
     req.id = id;
-
+    
     next();
   } catch (error) {
     return res

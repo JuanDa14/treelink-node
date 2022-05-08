@@ -7,7 +7,6 @@ const { dbConnection } = require("../database/config");
 class Server {
   constructor() {
     this.app = express();
-
     //Base de datos
     this.Connection();
 

@@ -18,16 +18,24 @@ const transporter = () => {
 const sendEmail = async (template, username, link, email, subject) => {
   const transport = transporter();
 
-  const html =
-    template === "forgot-password"
-      ? templateForgotPassword(username, link)
-      : templateValidateEmail(username, link);
+  const html = () => {
+    switch (template) {
+      case "forgot-password":
+        return templateForgotPassword(username, link);
+
+      case "validate-email":
+        return templateValidateEmail(username, link);
+
+      default:
+        "No template";
+    }
+  };
 
   await transport.sendMail({
     from: types.defaultEmail,
     to: `${email}`,
     subject,
-    html,
+    html: html(),
   });
 };
 

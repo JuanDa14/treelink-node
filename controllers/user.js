@@ -1,17 +1,18 @@
-const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 
 //TODO: Helpers
-const { generateJWT } = require("../helpers/generate-jwt");
-const { sendEmail } = require("../helpers/nodemailer");
+const {
+  generateForgotPassword,
+  generatelinkVerified,
+  generateJWT,
+  sendEmail,
+} = require("../helpers");
 
 /********************/
 
-//TODO variables de entorno
-const { types } = require("../types/types");
-/*******************/
-
 //TODO: Modelos
 const User = require("../models/user");
+
 /*******************/
 
 //TODO: login con contraseña
@@ -21,114 +22,35 @@ const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    const verifiedPassword = bcrypt.compareSync(password, user.password);
+    if (!user || !user.comparePassword(password))
+      return res.status(401).json({
+        ok: false,
+        message: "Email or password incorrect",
+      });
 
-    if (!(user.verified || user || verifiedPassword))
-      return res
-        .status(400)
-        .json({ ok: false, message: "Wrong username or password" });
+    if (!user.verified)
+      return res.status(401).json({
+        ok: false,
+        message: "Verify your email",
+      });
 
-    const { username, _id } = user;
+    if (user.google)
+      return res.status(401).json({
+        ok: false,
+        message: "Google account, please login with google",
+      });
+
+    const { username, _id, picture } = user;
 
     const token = await generateJWT(_id, username, "4h");
 
     return res.status(200).json({
       ok: true,
       id: _id,
+      picture,
       username,
       token,
     });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-//TODO registrar usuario
-const registerUser = async (req, res) => {
-  const { email, password, username } = req.body;
-
-  try {
-    const user = new User({ username, email, password });
-
-    const salt = bcrypt.genSaltSync();
-
-    user.password = bcrypt.hashSync(password, salt);
-
-    const token_link = await generateJWT(user._id, user.username, "10m");
-
-    const verified_link = `${types.baseUrl}${types.verifiedEmail}${token_link}`;
-
-    user.linkVerified = verified_link;
-
-    await user.save();
-
-    await sendEmail(
-      "validate-email",
-      username,
-      verified_link,
-      email,
-      "Verified your Email"
-    );
-
-    return res.status(200).json({
-      ok: true,
-      message: "¡ Check your email !",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-//TODO: Validar email
-const verifyUserEmail = async (req, res) => {
-  const { id, username } = req;
-
-  const { linkVerified } = req.body;
-
-  try {
-    const user = await User.findById(id);
-
-    if (!user || user.linkVerified !== linkVerified || user.verified) {
-      return res
-        .status(404)
-        .json({ ok: false, message: "An error has occurred" });
-    }
-
-    user.verified = true;
-    user.linkVerified = "";
-
-    await user.save();
-
-    const token = await generateJWT(id, username, "4h");
-
-    return res.status(200).json({
-      ok: true,
-      id,
-      username,
-      token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-//TODO revalidar token
-const getUserRefresh = async (req, res) => {
-  const { id, username } = req;
-
-  try {
-    const token = await generateJWT(id, username, "4h");
-
-    return res.status(200).json({ ok: true, id, username, token });
   } catch (error) {
     return res.status(500).json({
       ok: false,
@@ -149,37 +71,137 @@ const loginUserGoogle = async (req, res) => {
         username,
         email,
         google: true,
-        password: types.defaultPassword,
+        picture,
+        password: "123456",
+        forgotPassword: uuidv4(),
+        tokenConfirm: uuidv4(),
       });
 
-      const token_link = await generateJWT(user._id, user.username, "10m");
-
-      const verified_link = `${types.baseUrl}${types.verifiedEmail}${token_link}`;
-
-      user.linkVerified = verified_link;
-
       await user.save();
+
+      const link = generatelinkVerified(user.tokenConfirm);
 
       await sendEmail(
         "validate-email",
         user.username,
-        verified_link,
+        link,
         user.email,
         "Validate Email"
       );
 
-      return res.status(200).json({ ok: true, msg: "¡ Check your email !" });
+      return res
+        .status(200)
+        .json({ ok: true, message: "¡ Check your email !" });
     }
 
-    if (!user.verifyEmail && user.google) {
-      return res.status(403).json({ ok: false, msg: "An error has occurred" });
-    }
+    if (!user.verified)
+      return res.status(401).json({ ok: false, message: "Verify your email" });
+
+    if (!user.google)
+      return res
+        .status(401)
+        .json({ ok: false, message: "Email already exists" });
 
     const token = await generateJWT(user._id, user.username, "4h");
 
-    return res
-      .status(200)
-      .json({ ok: true, id: user._id, username: user.username, token });
+    return res.status(200).json({
+      ok: true,
+      id: user._id,
+      username: user.username,
+      picture: user.picture,
+      token,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//TODO registrar usuario
+const registerUser = async (req, res) => {
+  const { email, password, username } = req.body;
+
+  try {
+    const user = new User({
+      username,
+      email,
+      password,
+      forgotPassword: uuidv4(),
+      tokenConfirm: uuidv4(),
+    });
+
+    await user.save();
+
+    const link = generatelinkVerified(user.tokenConfirm);
+
+    console.log(link);
+
+    await sendEmail(
+      "validate-email",
+      username,
+      link,
+      email,
+      "Verified your Email"
+    );
+
+    return res.status(200).json({
+      ok: true,
+      message: "¡ Check your email !",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//TODO: Validar email
+const verifyUserEmail = async (req, res) => {
+  const { tokenConfirm } = req.params;
+
+  try {
+    const user = await User.findOne({ tokenConfirm });
+
+    if (!user || user.tokenConfirm !== tokenConfirm || user.verified) {
+      return res
+        .status(404)
+        .json({ ok: false, message: "An error has occurred" });
+    }
+
+    user.verified = true;
+
+    await user.save();
+
+    const token = await generateJWT(user._id, user.username, "4h");
+
+    return res.status(200).json({
+      ok: true,
+      id: user._id,
+      user: user.username,
+      picture: user.picture,
+      token,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//TODO revalidar token
+const getUserRefresh = async (req, res) => {
+  const { id, username } = req;
+
+  try {
+    const { picture } = await User.findById(id);
+
+    const token = await generateJWT(id, username, "4h");
+
+    return res.status(200).json({ ok: true, id, username, picture, token });
   } catch (error) {
     return res.status(500).json({
       ok: false,
@@ -195,27 +217,24 @@ const forgotUserPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (!(user || user.verified) || user.google) {
-      return res.status(500).json({ ok: false, msg: "An error has occurred" });
-    }
+    if (!(user || user.verified) || user.google)
+      return res
+        .status(404)
+        .json({ ok: false, message: "An error has occurred" });
 
-    const token_link = await generateJWT(user._id, user.username, "10m");
-
-    const forgot_link = `${types.baseUrl}${types.forgotPassword}${token_link}`;
-
-    user.forgotPassword = forgot_link;
+    const link = generateForgotPassword(user.forgotPassword);
 
     await user.save();
 
     await sendEmail(
       "forgot-password",
       user.username,
-      forgot_link,
+      link,
       user.email,
       "Recover Password"
     );
 
-    return res.status(200).json({ ok: true, msg: "¡ Check your email !" });
+    return res.status(200).json({ ok: true, message: "¡ Check your email !" });
   } catch (error) {
     return res
       .status(500)
@@ -224,24 +243,20 @@ const forgotUserPassword = async (req, res) => {
 };
 
 const resetUserPassword = async (req, res) => {
-  const { id } = req;
+  const { forgotPassword } = req.params;
 
-  const { forgotPassword, password } = req.body;
+  const { password } = req.body;
 
   try {
-    const user = await User.findById(id);
+    const user = await User.findOne({ forgotPassword });
 
-    if (user.resetLink === "" || user.forgotPassword !== forgotPassword)
+    if (user.forgotPassword !== forgotPassword)
       return res.status(401).json({
         ok: false,
         message: "An error has occurred",
       });
 
-    const salt = bcrypt.genSaltSync();
-
-    user.password = bcrypt.hashSync(password, salt);
-
-    user.forgotPassword = "";
+    user.password = password;
 
     await user.save();
 
@@ -258,33 +273,40 @@ const resetUserPassword = async (req, res) => {
 
 //TODO: Login con facebook
 const loginUserFacebook = async (req, res) => {
-  const { username, id } = req.body;
+  const { username, email, picture } = req.body;
 
   try {
-    let user = await User.findOne({ email: id });
+    let user = await User.findOne({ email });
 
     if (!user) {
       user = new User({
-        email: id,
+        email,
         username,
-        password: types.defaultPassword,
+        picture,
+        password: "123456",
         verified: true,
+        forgotPassword: uuidv4(),
+        tokenConfirm: uuidv4(),
       });
 
       await user.save();
     }
 
-    if (!user.verified) {
+    if (!user.verified || user.google) {
       return res
-        .status(403)
+        .status(401)
         .json({ ok: false, message: "An error has occurred" });
     }
 
     const token = await generateJWT(user._id, user.username, "4h");
 
-    return res
-      .status(200)
-      .json({ ok: true, id: user._id, username: user.username, token });
+    return res.status(200).json({
+      ok: true,
+      id: user._id,
+      username: user.username,
+      picture: user.picture,
+      token,
+    });
   } catch (error) {
     return res.status(500).json({
       ok: false,

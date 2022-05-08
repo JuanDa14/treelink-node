@@ -6,7 +6,7 @@ const validateFile = (req, res, next) => {
   const extension = mimetype.split("/")[1];
 
   if (!req.files || Object.keys(req.files).length === 0 || !req.files.file) {
-    return res.status(400).json({
+    return res.status(404).json({
       ok: false,
       message: "No file uploaded",
     });
@@ -14,7 +14,7 @@ const validateFile = (req, res, next) => {
 
   if (!allowedExtensions.includes(extension)) {
     return res
-      .status(400)
+      .status(403)
       .json({ ok: false, message: "Extension not allowed" });
   }
 

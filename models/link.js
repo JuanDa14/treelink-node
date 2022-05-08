@@ -5,22 +5,25 @@ const linkSchema = new Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
       minlength: 3,
     },
 
     url: {
       type: String,
       required: true,
+      trim: true,
     },
 
     img: {
       type: String,
-      default: "",
+      default: null,
     },
 
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
   },
   {
